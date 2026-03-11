@@ -43,10 +43,19 @@ class QuantumDistanceCalculator:
 
     This preserves the ordering of -log(F + eps), but now d_eps(1) = 0.
     """
-    def __init__(self, shots: int = 1024, backend=None, smooth_eps: float = 1e-3):
+    def __init__(
+        self,
+        shots: int = 1024,
+        backend=None,
+        smooth_eps: float = 1e-3,
+        circuit_batch_size: int = 256,
+        transpile_optimization_level: int = 0,
+    ):
         self.shots = shots
         self.backend = backend or AerSimulator()
         self.smooth_eps = smooth_eps
+        self.circuit_batch_size = max(1, int(circuit_batch_size))
+        self.transpile_optimization_level = int(transpile_optimization_level)
 
     def distance(
         self,
@@ -105,24 +114,93 @@ class QuantumDistanceCalculator:
             else "log_fidelity"
         )
 
+    def _normalize_vector(self, vec: np.ndarray) -> np.ndarray:
+        v = np.asarray(vec)
+        return v / (np.linalg.norm(v) + 1e-12)
+
+    def _classical_fidelity(self, v1: np.ndarray, v2: np.ndarray) -> float:
+        return float(np.abs(np.dot(v1, v2)) ** 2)
+
+    def _counts_to_overlap_sq(self, counts: dict) -> float:
+        prob_0 = counts.get("0", 0) / self.shots
+        return max(0.0, min(1.0, 2 * prob_0 - 1))
+
+    def _run_swap_test_circuits(self, circuits: List[QuantumCircuit]) -> List[dict]:
+        if not circuits:
+            return []
+
+        tqcs = transpile(
+            circuits,
+            self.backend,
+            optimization_level=self.transpile_optimization_level,
+        )
+        if not isinstance(tqcs, list):
+            tqcs = [tqcs]
+
+        job = self.backend.run(tqcs, shots=self.shots)
+        result = job.result()
+
+        try:
+            return [result.get_counts(i) for i in range(len(tqcs))]
+        except Exception:
+            raw_counts = result.get_counts()
+            return raw_counts if isinstance(raw_counts, list) else [raw_counts]
+
+    def _fidelity_from_normalized_pairs(
+        self,
+        pairs: List[tuple[np.ndarray, np.ndarray]],
+    ) -> np.ndarray:
+        fidelities = np.zeros(len(pairs), dtype=float)
+        circuits: List[QuantumCircuit] = []
+        circuit_pair_indices: List[int] = []
+
+        for pair_idx, (v1, v2) in enumerate(pairs):
+            qc = self._create_swap_test_circuit(v1, v2)
+            if qc is None:
+                fidelities[pair_idx] = self._classical_fidelity(v1, v2)
+            else:
+                circuits.append(qc)
+                circuit_pair_indices.append(pair_idx)
+
+        for batch_start in range(0, len(circuits), self.circuit_batch_size):
+            batch_circuits = circuits[batch_start:batch_start + self.circuit_batch_size]
+            batch_pair_indices = circuit_pair_indices[
+                batch_start:batch_start + self.circuit_batch_size
+            ]
+
+            try:
+                counts_list = self._run_swap_test_circuits(batch_circuits)
+                for local_idx, counts in enumerate(counts_list):
+                    pair_idx = batch_pair_indices[local_idx]
+                    fidelities[pair_idx] = self._counts_to_overlap_sq(counts)
+            except Exception as e:
+                logger.warning("Falling back to classical fidelity for circuit batch: %s", e)
+                for pair_idx in batch_pair_indices:
+                    v1, v2 = pairs[pair_idx]
+                    fidelities[pair_idx] = self._classical_fidelity(v1, v2)
+
+        return fidelities
+
+    def _distances_from_fidelities(
+        self,
+        fidelities: np.ndarray,
+        metric: str,
+    ) -> np.ndarray:
+        metric = self._normalize_mode(metric)
+        fidelities = np.clip(np.asarray(fidelities, dtype=float), 0.0, 1.0)
+
+        if metric == "log_fidelity":
+            return np.log((1.0 + self.smooth_eps) / (fidelities + self.smooth_eps))
+
+        return 1.0 - fidelities
+
+    
     #Fidelity via Swap‑Test or classical-Fallback
     
     def _fidelity(self, vec1: np.ndarray, vec2: np.ndarray) -> float:
-        v1 = vec1 / (np.linalg.norm(vec1) + 1e-12)
-        v2 = vec2 / (np.linalg.norm(vec2) + 1e-12)
-        try:
-            qc = self._create_swap_test_circuit(v1, v2)
-            if qc is None:
-                raise RuntimeError("Circuit creation failed")
-            tqc = transpile(qc, self.backend)
-            job = self.backend.run(tqc, shots=self.shots)
-            counts = job.result().get_counts()
-            prob_0 = counts.get("0", 0) / self.shots
-            overlap_sq = max(0.0, min(1.0, 2 * prob_0 - 1))
-            return overlap_sq
-        except Exception as e:
-            logger.warning("Falling back to classical fidelity: %s", e)
-            return float(np.abs(np.dot(v1, v2)) ** 2)
+        v1 = self._normalize_vector(vec1)
+        v2 = self._normalize_vector(vec2)
+        return float(self._fidelity_from_normalized_pairs([(v1, v2)])[0])
 
     def _create_swap_test_circuit(
         self, vec1: np.ndarray, vec2: np.ndarray
@@ -159,10 +237,13 @@ class QuantumDistanceCalculator:
         mode: str = "log_fidelity",
     ) -> np.ndarray:
         mode = self._normalize_mode(mode)
-        F_list = [self._fidelity(test_vector, v) for v in vectors]
-        if mode == "log_fidelity":
-            return np.array([self._smooth_log_distance(F) for F in F_list])
-        return np.array([1.0 - F for F in F_list])
+
+        test_vector_norm = self._normalize_vector(test_vector)
+        vectors_norm = [self._normalize_vector(v) for v in vectors]
+        pairs = [(test_vector_norm, v) for v in vectors_norm]
+
+        fidelities = self._fidelity_from_normalized_pairs(pairs)
+        return self._distances_from_fidelities(fidelities, mode)
 
     #Alias for K‑Means / PQ‑kNN
     def pairwise_distance_matrix(
@@ -171,13 +252,39 @@ class QuantumDistanceCalculator:
         Y: Optional[List[np.ndarray]] = None,
         metric: str = "log_fidelity",
     ) -> np.ndarray:
-        return quantum_pairwise_distances(
-            np.array(X),
-            np.array(Y) if Y is not None else None,
-            metric,
-            shots=self.shots,
-            smooth_eps=self.smooth_eps,
-        )
+        metric = self._normalize_mode(metric)
+
+        X_norm = [self._normalize_vector(x) for x in X]
+        Y_norm = X_norm if Y is None else [self._normalize_vector(y) for y in Y]
+
+        D = np.zeros((len(X_norm), len(Y_norm)), dtype=float)
+
+        batch_pairs: List[tuple[np.ndarray, np.ndarray]] = []
+        batch_positions: List[tuple[int, int]] = []
+
+        def flush_batch() -> None:
+            if not batch_pairs:
+                return
+
+            fidelities = self._fidelity_from_normalized_pairs(batch_pairs)
+            distances = self._distances_from_fidelities(fidelities, metric)
+
+            for (row_idx, col_idx), dist in zip(batch_positions, distances):
+                D[row_idx, col_idx] = dist
+
+            batch_pairs.clear()
+            batch_positions.clear()
+
+        for i, x in enumerate(X_norm):
+            for j, y in enumerate(Y_norm):
+                batch_pairs.append((x, y))
+                batch_positions.append((i, j))
+
+                if len(batch_pairs) >= self.circuit_batch_size:
+                    flush_batch()
+
+        flush_batch()
+        return D
 
 
 #External Helpers: full Pairwise Distance Matrix
@@ -188,16 +295,15 @@ def quantum_pairwise_distances(
     *,
     shots: int = 1024,
     smooth_eps: float = 1e-3,
+    backend=None,
+    circuit_batch_size: int = 256,
+    transpile_optimization_level: int = 0,
 ) -> np.ndarray:
-    calc = QuantumDistanceCalculator(shots=shots, smooth_eps=smooth_eps)
-    metric = calc._normalize_mode(metric)
-    if Y is None:
-        Y = X
-    D = np.zeros((len(X), len(Y)))
-    for i in range(len(X)):
-        for j in range(len(Y)):
-            F = calc.fidelity(X[i], Y[j])
-            D[i, j] = (
-                calc._smooth_log_distance(F) if metric == "log_fidelity" else 1.0 - F
-            )
-    return D
+    calc = QuantumDistanceCalculator(
+        shots=shots,
+        backend=backend,
+        smooth_eps=smooth_eps,
+        circuit_batch_size=circuit_batch_size,
+        transpile_optimization_level=transpile_optimization_level,
+    )
+    return calc.pairwise_distance_matrix(X, Y, metric)
