@@ -50,12 +50,27 @@ class QuantumDistanceCalculator:
         smooth_eps: float = 1e-3,
         circuit_batch_size: int = 256,
         transpile_optimization_level: int = 0,
+        fidelity_mode: str = "shot",
     ):
-        self.shots = shots
-        self.backend = backend or AerSimulator()
-        self.smooth_eps = smooth_eps
+        self.shots = int(shots)
+        self.fidelity_mode = str(fidelity_mode).lower().strip()
+        if self.fidelity_mode not in ("shot", "exact"):
+            raise ValueError("fidelity_mode must be 'shot' or 'exact'")
+
+        # In exact mode we do not need an Aer backend at all.
+        self.backend = None if self.fidelity_mode == "exact" else (backend or AerSimulator())
+
+        self.smooth_eps = float(smooth_eps)
         self.circuit_batch_size = max(1, int(circuit_batch_size))
         self.transpile_optimization_level = int(transpile_optimization_level)
+
+        self._stats = {
+            "fidelity_mode": self.fidelity_mode,
+            "exact_pairs": 0,
+            "shot_pairs": 0,
+            "fallback_pairs": 0,
+        }
+
 
     def distance(
         self,
@@ -115,8 +130,19 @@ class QuantumDistanceCalculator:
         )
 
     def _normalize_vector(self, vec: np.ndarray) -> np.ndarray:
-        v = np.asarray(vec)
-        return v / (np.linalg.norm(v) + 1e-12)
+        v = np.asarray(vec, dtype=np.float64)
+        norm = float(np.linalg.norm(v))
+        if norm <= 1e-12:
+            return np.zeros_like(v, dtype=np.float64)
+        return v / norm
+
+    @staticmethod
+    def _is_zero_vector(vec: np.ndarray, eps: float = 1e-12) -> bool:
+        return float(np.linalg.norm(vec)) <= eps
+    
+    def get_stats(self) -> dict:
+        return dict(self._stats)
+
 
     def _classical_fidelity(self, v1: np.ndarray, v2: np.ndarray) -> float:
         return float(np.abs(np.dot(v1, v2)) ** 2)
@@ -150,11 +176,32 @@ class QuantumDistanceCalculator:
         self,
         pairs: List[tuple[np.ndarray, np.ndarray]],
     ) -> np.ndarray:
+        if self.fidelity_mode == "exact":
+            fidelities = np.array(
+                [self._classical_fidelity(v1, v2) for (v1, v2) in pairs],
+                dtype=float,
+            )
+            self._stats["exact_pairs"] += int(len(pairs))
+            return fidelities
+
         fidelities = np.zeros(len(pairs), dtype=float)
         circuits: List[QuantumCircuit] = []
         circuit_pair_indices: List[int] = []
 
         for pair_idx, (v1, v2) in enumerate(pairs):
+            v1_zero = self._is_zero_vector(v1)
+            v2_zero = self._is_zero_vector(v2)
+
+            # Robust handling of blank / zero partitions:
+            # - two blank partitions are treated as identical
+            # - blank vs nonblank partitions are maximally dissimilar
+            if v1_zero and v2_zero:
+                fidelities[pair_idx] = 1.0
+                continue
+            if v1_zero or v2_zero:
+                fidelities[pair_idx] = 0.0
+                continue
+
             qc = self._create_swap_test_circuit(v1, v2)
             if qc is None:
                 fidelities[pair_idx] = self._classical_fidelity(v1, v2)
@@ -170,11 +217,13 @@ class QuantumDistanceCalculator:
 
             try:
                 counts_list = self._run_swap_test_circuits(batch_circuits)
+                self._stats["shot_pairs"] += int(len(counts_list))
                 for local_idx, counts in enumerate(counts_list):
                     pair_idx = batch_pair_indices[local_idx]
                     fidelities[pair_idx] = self._counts_to_overlap_sq(counts)
             except Exception as e:
                 logger.warning("Falling back to classical fidelity for circuit batch: %s", e)
+                self._stats["fallback_pairs"] += int(len(batch_pair_indices))
                 for pair_idx in batch_pair_indices:
                     v1, v2 = pairs[pair_idx]
                     fidelities[pair_idx] = self._classical_fidelity(v1, v2)

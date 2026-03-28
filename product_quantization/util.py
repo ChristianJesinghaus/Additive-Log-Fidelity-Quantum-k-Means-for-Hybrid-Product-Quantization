@@ -43,31 +43,43 @@ def squared_euclidean_dist(vec1: np.ndarray, vec2: np.ndarray) -> np.ndarray:
 
 
 def amplitude_encoding(vector: np.ndarray) -> QuantumCircuit:
-    """
-    Implements quantum amplitude encoding.
-    """
-    
-    # Normalization of the quantum state
-    normalized = vector / (np.linalg.norm(vector) + 1e-12)
+    """ Implements quantum amplitude encoding. """
+    vector = np.asarray(vector, dtype=np.float64).reshape(-1)
 
-    # Pad to next power of 2 for quantum register
-    n_qubits = int(np.ceil(np.log2(len(normalized))))
+    if len(vector) == 0:
+        raise ValueError("Cannot amplitude-encode an empty vector.")
+
+    n_qubits = int(np.ceil(np.log2(len(vector)))) if len(vector) > 1 else 1
     padded_size = 2**n_qubits
+    qc = QuantumCircuit(n_qubits)
 
-    # Create complex-valued state vector
+    norm = float(np.linalg.norm(vector))
+
+    # Defensive fallback:
+    # zero vectors should normally be intercepted earlier in quantum_distance.py.
+    # If one still reaches this function, map it to |0...0> to avoid NaNs.
+    if norm <= 1e-12:
+        zero_state = np.zeros(padded_size, dtype=complex)
+        zero_state[0] = 1.0
+        qc.append(StatePreparation(zero_state), range(n_qubits))
+        return qc
+
+    normalized = vector / norm
+
     padded = np.zeros(padded_size, dtype=complex)
     padded[:len(normalized)] = normalized.astype(complex)
 
-    # Renormalization after padding
-    padded = padded / np.linalg.norm(padded)
+    padded_norm = float(np.linalg.norm(padded))
+    if padded_norm <= 1e-12:
+        zero_state = np.zeros(padded_size, dtype=complex)
+        zero_state[0] = 1.0
+        qc.append(StatePreparation(zero_state), range(n_qubits))
+        return qc
 
-    # Create quantum circuit
-    qc = QuantumCircuit(n_qubits)
+    padded = padded / padded_norm
 
-    #  Real Quantum State Preparation
     state_prep = StatePreparation(padded)
     qc.append(state_prep, range(n_qubits))
-    
     return qc
 
 

@@ -38,6 +38,8 @@ class QuantumProductQuantizationKNN:
         distance_metric: str = "log_fidelity",
         smooth_eps: float = 1e-3,
         sign_aware_encoding: bool = False,
+        fidelity_mode: str = "shot",
+        qk_tolerance: float = 1e-2,
         **kwargs,
     ):
         #validate metric
@@ -60,10 +62,14 @@ class QuantumProductQuantizationKNN:
         self.random_state = random_state
         self.smooth_eps = smooth_eps
         self.sign_aware_encoding = bool(sign_aware_encoding)
+        self.fidelity_mode = str(fidelity_mode).lower().strip()
+        self.qk_tolerance = float(qk_tolerance)
 
         #  Quantum Helper 
         self._distance_calc = QuantumDistanceCalculator(
-            shots=self.quantum_shots, smooth_eps=self.smooth_eps
+            shots=self.quantum_shots,
+            smooth_eps=self.smooth_eps,
+            fidelity_mode=self.fidelity_mode,
         )
 
         bits = int(np.ceil(np.log2(max(1, self.c))))
@@ -124,9 +130,11 @@ class QuantumProductQuantizationKNN:
             n_clusters=self.c,
             max_iter=self.max_iter_qk,
             shots=self.quantum_shots,
+            tolerance=self.qk_tolerance,
             random_state=self.random_state,
             distance_metric=self.distance_metric,
             smooth_eps=self.smooth_eps,
+            fidelity_mode=self.fidelity_mode,
         )
         labels = qkm.fit_predict(Xp).astype(self.int_type)
         cents = qkm.cluster_centers_
@@ -194,6 +202,8 @@ class QuantumProductQuantizationKNN:
             "smooth_eps": self.smooth_eps,
             "sign_aware_encoding": self.sign_aware_encoding,
             "encoding_map": ("posneg_split" if self.sign_aware_encoding else "raw_partition"),
+            "fidelity_mode": self.fidelity_mode,
+            "qk_tolerance": self.qk_tolerance,
         }
         if hasattr(self, "_distance_calc") and hasattr(self._distance_calc, "get_stats"):
             try:

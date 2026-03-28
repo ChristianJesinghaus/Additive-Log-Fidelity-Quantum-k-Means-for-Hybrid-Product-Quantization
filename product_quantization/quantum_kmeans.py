@@ -34,9 +34,9 @@ class QuantumKMeans:
     """
     #tolerance adapted from 2e-3 to 1e-2
     def __init__(self, n_clusters: int, max_iter: int = 100, shots: int = 1024,
-                 tolerance: float = 1e-2, random_state: Optional[int] = None,
-                 backend=None, distance_metric: str = "log_fidelity",
-                 smooth_eps: float = 1e-3, **kwargs):
+                tolerance: float = 1e-2, random_state: Optional[int] = None,
+                backend=None, distance_metric: str = "log_fidelity",
+                smooth_eps: float = 1e-3, fidelity_mode: str = "shot", **kwargs):
         dm = distance_metric.lower()
         if dm not in _ALLOWED_METRICS:
             raise ValueError(f"Unknown distance metric '{distance_metric}'. "
@@ -51,14 +51,18 @@ class QuantumKMeans:
         self.shots = shots
         self.tolerance = tolerance
         self.random_state = random_state
+        self.fidelity_mode = str(fidelity_mode).lower().strip()
 
-        if backend is None:
+        if backend is None and self.fidelity_mode != "exact":
             backend = AerSimulator()
         self.backend = backend
-        self.smooth_eps = smooth_eps
 
+        self.smooth_eps = smooth_eps
         self._distance_calc = QuantumDistanceCalculator(
-            shots=self.shots, backend=self.backend, smooth_eps=self.smooth_eps
+            shots=self.shots,
+            backend=self.backend,
+            smooth_eps=self.smooth_eps,
+            fidelity_mode=self.fidelity_mode,
         )
 
         # Outputs

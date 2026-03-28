@@ -53,13 +53,16 @@ class ProductQuantizationKNN:
       :meth:`export_histories`.
     """
 
-    def __init__(self,
-                 n: int,
-                 c: int | None = None,
-                 *,
-                 k_clusters: int | None = None,
-                 random_state: int = 42,
-                 n_init: int = 1) -> None:
+    def __init__(
+        self,
+        n: int,
+        c: int | None = None,
+        *,
+        k_clusters: int | None = None,
+        random_state: int = 42,
+        n_init: int = 1,
+        use_multiprocessing: bool = False,
+    ) -> None:
         # number of partitions
         self.n: int = n
         # determine number of clusters
@@ -82,6 +85,7 @@ class ProductQuantizationKNN:
         # hyperparameters for reproducible K‑Means
         self.random_state: int = int(random_state)
         self.n_init: int = int(n_init)
+        self.use_multiprocessing: bool = bool(use_multiprocessing)
         # store centroids per partition after compression
         self.subvector_centroids: dict[int, np.ndarray] = {}
         # storage for K‑Means stats per partition
@@ -195,10 +199,14 @@ class ProductQuantizationKNN:
             else:
                 part = self._get_data_partition(train_data, p_idx)
             params.append((p_idx, part))
-        # run clustering (parallelised via multiprocessing)
+            # run clustering
         if len(params) > 0:
-            with multiprocessing.Pool() as pool:
-                res = pool.starmap(self._compress_partition, params)
+            if self.use_multiprocessing:
+                with multiprocessing.Pool() as pool:
+                    res = pool.starmap(self._compress_partition, params)
+            else:
+                res = [self._compress_partition(p_idx, part) for (p_idx, part) in params]
+
             for (p_idx, labels, centroids, metrics) in res:
                 # assign compressed codes and centroids
                 self.compressed_data[:, p_idx] = labels
