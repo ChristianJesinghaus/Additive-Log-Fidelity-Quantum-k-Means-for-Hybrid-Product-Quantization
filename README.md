@@ -1,167 +1,107 @@
-# THIS IS NOT THE REPOSITORY YOU ARE LOOKING FOR (Jedi Handmove)
+# Artifact for “Additive Log-Fidelity Quantum k-Means for Hybrid Product Quantization”
 
+This repository accompanies the short NIER submission on additive log-fidelity quantum k-means for hybrid product quantization. It reproduces the paper’s main experiments on Digits, downsampled Fashion-MNIST 8x8, and Signed-Mirror-64, and it contains the scripts used to generate the paper tables, plots, and summary reports.
 
-# Hybrid Quantum Product Quantization k‑NN (PQ‑kNN)
-
-*A first prototype that re‑formulates **Product Quantization (PQ)** and its **k‑NN** lookup within a quantum‑information setting. This was developed during a bachelor’s thesis at the Institute for Systems Engineering, Leibniz University, under the supervision of Professor Dr. Jan Rellermeyer.*
-
-**What’s inside**
-
-- **Classical baseline**: PQ‑kNN with Euclidean sub‑distances and scikit‑learn K‑Means (for comparison).
-- **Hybrid‑quantum variant**: replaces Euclidean sub‑distances with **log‑fidelity** where the fidelity is estimated via the **SWAP test** (Qiskit Aer), and trains sub‑codebooks with a safeguarded **Quantum K‑Means** routine.
-- **Thesis**: The approach and experiments are documented in the bachelor’s thesis PDF. Look here for a detailed explanation of the system.
-- **Result highlight (Digits 64‑D)**: The hybrid model approaches the classical accuracy (~95% at `M = 300`).
-
----
-
-## Quick start
+## Reproducing the paper
 
 ### 1) Environment
 
-~~~bash
+```bash
 python -m venv .venv
-# Windows: .venv\Scripts\activate
-source .venv/bin/activate
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-~~~
+```
 
-**Dependencies:** `numpy`, `scikit-learn`, `qiskit`, `qiskit-aer`, `pandas`, `matplotlib`, `seaborn`
+After confirming a clean run in a fresh environment, save an exact lock file for the submission artifact:
 
----
+```bash
+pip freeze > requirements-lock.txt
+```
 
-### 2) Prepare dataset
+### 2) Generate the datasets used in the paper
 
-~~~bash
+```bash
+python create_digits_full_npz.py
+python create_fashion8x8_npz.py
+python create_signed_mirror64_npz.py
+```
+
+These scripts create the following files under `datasets/`:
+
+- `digits64_full.npz`
+- `fashion_mnist_8x8_full.npz`
+- `signed_mirror64_full.npz`
+
+### 3) Run the paper experiments
+
+Run all paper plans:
+
+```bash
+python run_paper_experiments.py --plan all --datasets-dir datasets --output-dir experiments/paper_runs
+```
+
+Or run only the main comparison:
+
+```bash
+python run_paper_experiments.py --plan all_main --datasets-dir datasets --output-dir experiments/paper_runs
+```
+
+Save per-partition training histories as well:
+
+```bash
+python run_paper_experiments.py --plan all --datasets-dir datasets --output-dir experiments/paper_runs --save-histories
+```
+
+### 4) Build the paper report
+
+```bash
+python make_paper_report.py --input-dir experiments/paper_runs --output-dir experiments/paper_report
+```
+
+The generated report folder contains aggregated tables, plots, and helper text files for the manuscript.
+
+## Variant names used in the code and in the paper
+
+The experiment runner uses compact internal names:
+
+- `exact_knn` -> exact kNN
+- `classical` -> classical PQ
+- `quantum_exact` -> exact-overlap reference
+- `quantum_shot` -> shot-based swap-test estimator
+
+In the paper, the last two names are used to avoid the misleading impression that the `quantum_exact` path is a hardware-based quantum run. It is the same fidelity-based assignment rule with exact overlaps computed classically from normalized block vectors.
+
+## Demo path (not the paper reproduction path)
+
+The repository still includes `hybrid_quantum_example.py` and `config.txt` for a small demo-style run on a split `example_data.npz` file. That path is useful for quick smoke tests, but it is not the recommended route for reproducing the paper tables.
+
+Example:
+
+```bash
 python create_digits_npz.py
-~~~
-
-Generates `example_data.npz` from scikit‑learn’s Digits dataset (64‑D, ~1800 samples). The for the experiments used .npz is already given here.
-
----
-
-### 3) Configure
-
-Edit `config.txt` (simple `key=value` format). Example:
-
-~~~txt
-# data split & file
-train_size = 300
-test_size  = 60
-data_file  = "example_data.npz"
-normalize_data = true
-
-# PQ / classifier
-n = 8
-c = 10
-k = 9
-k_clusters = 10
-
-# algorithmic path
-algorithm = "quantum"          # "classical" or "quantum"
-distance_metric = "log_fidelity"   # "log_fidelity" | "one_minus_fidelity" | "swap_test" | "1-f" | "lf" | "logf" | "omf"
-
-# quantum controls
-quantum_shots = 7000
-max_iter_qk = 100
-~~~
-
-See `config.txt` for more options.
-Additionally if wanted one can configure the tolerance setting in the 'quantum_kmeans.py' file.
-
----
-
-### 4) Train & evaluate
-
-~~~bash
 python hybrid_quantum_example.py
-~~~
+```
 
-- **Classical path**: per‑partition K‑Means (scikit‑learn).
-- **Quantum path**: per‑partition **Quantum K‑Means** with **log‑fidelity** distances (SWAP test via Qiskit Aer).
-- **Outputs**: model, config, results, confusion matrices, and histories saved under `experiments/`.
+## Optional inspection helpers
 
----
+Test a saved model:
 
-### 5) Test saved models interactively
-
-~~~bash
+```bash
 python test_saved_model.py
-~~~
+```
 
-Reloads a saved model, lets you adjust `k` (and distance metric for quantum), and shows the confusion matrix & accuracy.
+Create a confusion matrix for a saved classical run:
 
----
+```bash
+python classical_confusion.py --model_dir experiments/models/<your_model_dir>
+```
 
-### 6) Confusion matrix for classical runs
+## Reproducibility notes
 
-~~~bash
-python confusion_classical.py --model_dir experiments/models/<your_model_dir>
-~~~
-
-Generates a **normalized** confusion matrix PNG.
-
----
-
-## Key Components
-
-- **Classical PQ‑kNN** — `ProductQuantizationKNN`  
-  Parallelized partitions, scikit‑learn K‑Means, inertia histories.
-- **Quantum distance** — `QuantumDistanceCalculator`  
-  SWAP‑test **fidelity**, **log‑fidelity**, and **one‑minus‑fidelity**.
-- **Quantum K‑Means** — `QuantumKMeans`  
-  Rayleigh–Ritz eigenvector update + Riemannian fallback.
-- **Hybrid PQ‑kNN** — `QuantumProductQuantizationKNN`  
-  Quantum distance for compression & prediction, exports partition histories.
-- **Simulators / stubs** — `QuantumSimulator`, `QRAMSimulator`  
-  Resource estimates and a QRAM mock.
-- **Config loader** — `ConfigLoader`  
-  Key–value parsing with defaults.
-- **Persistence** — `ModelPersistence`  
-  Save/load/export model, configs, results, histories, summaries.
-
----
-
-## Key results
-
-- **Accuracy**: The quantum pipeline underperforms on small datasets but converges to classical levels at larger `M` (both ~95% at `M = 300` on Digits 64‑D).  
-- **Iterations**: Quantum K‑Means generally needs more iterations (occasional spikes, can be mitigated by tolerance tuning).  
-- **Cluster quality**: Per‑point losses remain roughly stable with larger dataset size.  
-- **Runtime**: Quantum path is **much slower** due to simulated SWAP tests and non-optimized classical computations.
-- **Future work**: In the thesis a few points are detailed for future work. These include things like: more models trained on larger and more diverse datasets, test on different parameter settings, make the code more efficient, or find heuristics/a more efficient centroid update rule  
-
-<p align="center">
-  <img src="images/accuracy_vs_M.png" alt="Result 1" width="45%"/>
-  <img src="images/mean_loss_pP_LAST.png" alt="Result 2" width="45%"/>
-</p>
-
-
-
----
-
-
+- The paper’s shared real-data configuration uses `shots = 2000`, `tau = 1e-2`, `epsilon = 1e-3`, `m = 8`, and `K = 10`.
+- Sign-aware encoding is enabled only for the Signed-Mirror-64 study.
+- The quantum kNN path now uses the same tie-break rule as the classical PQ baseline: majority vote first, then smallest summed approximate distance among tied labels.
 
 ## Citation
 
-If you use this repository or its results, please cite:
-
-> **Christian Jesinghaus**, *Product Quantization Techniques for Accelerating Vector Database Operations on a Hybrid Quantum Computing Machine*. Bachelor’s Thesis, Leibniz University Hannover, Institute for Systems Engineering, **September 2025**.
-
-A machine‑readable `CITATION.cff` is included.
-
----
-
-## License
-
-- **Own code**: custom license `LicenseRef-BA-Citation` (see `LICENSE`). Academic use **requires citing** the thesis above.  
-- **Third‑party**: `product_quantization/PQKNN.py` adapted from **Jeroen Van Der Donckt** under the **MIT License**.  
-  License text is preserved at `THIRD_PARTY_LICENSES/classical_PQKNN-MIT.txt`.
-
----
-
-## Acknowledgments
-
-- Classical PQ‑kNN baseline by **Jeroen Van Der Donckt** (MIT).  
-- **Qiskit Aer** used for SWAP‑test simulation.  
-- Original PQ paper: https://lear.inrialpes.fr/pubs/2011/JDS11/jegou_searching_with_quantization.pdf  
-Jegou, Herve, Matthijs Douze, and Cordelia Schmid. "Product quantization for nearest neighbor search." IEEE transactions on pattern analysis and machine intelligence 33.1 (2010): 117-128.
-- Research context and evaluation are detailed in the thesis.
+If you use this repository or its results, please cite the accompanying paper or the machine-readable `CITATION.cff` file included in the repository.
