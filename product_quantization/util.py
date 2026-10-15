@@ -1,10 +1,39 @@
 # -*- coding: utf-8 -*-
-__author__ = 'Jeroen Van Der Donckt'
 
- 
-# © 2021 Jeroen Van Der Donckt — License: MIT (see THIRD_PARTY_LICENSES/classical_PQKNN-MIT.txt)
-# Modifications © 2025 Christian Jesinghaus
-# SPDX-License-Identifier: MIT
+# This file contains portions under different licensing terms.
+#
+# MIT-licensed upstream-derived portion:
+#   - log_nb_clusters_to_np_int_type
+#   - squared_euclidean_dist
+#
+# These functions are derived from:
+#   Jeroen Van Der Donckt, jvdd/pqknn
+#   https://github.com/jvdd/pqknn
+#
+# Upstream reference:
+#   https://github.com/jvdd/pqknn/blob/4722d9be07bb12a9ba32e2fc9205dc54b8daf219/product_quantization/util.py
+#
+# Copyright (c) 2021 Jeroen Van Der Donckt
+# Licensed under the MIT License.
+#
+# Any later modifications made by Christian Jesinghaus within the two
+# functions listed above are also made available under the MIT License.
+#
+# Other additions and modifications in this file, including the quantum
+# helper functions, are covered by LicenseRef-BA-Citation to the extent
+# applicable. See the repository-level LICENSE file.
+#
+# Some of the quantum-related code was initially generated with the
+# assistance of ChatGPT and was subsequently reviewed, tested, integrated,
+# and in places manually modified by Christian Jesinghaus. No separate
+# third-party software implementation was intentionally adapted as the
+# source of those quantum helper functions. See PROVENANCE.md for details.
+#
+# Third-party license notice:
+#   THIRD_PARTY_LICENSE/classical_PQKNN_MIT.txt
+#
+# Because different portions of this file are subject to different terms,
+# no single file-wide SPDX-License-Identifier is declared here.
 
 
 import numpy as np
