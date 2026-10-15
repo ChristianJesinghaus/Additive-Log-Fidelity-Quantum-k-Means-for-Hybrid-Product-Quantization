@@ -1,4 +1,31 @@
-License Statement concerning the classical PQKNN.py implementation.
+Third-Party Notice: jvdd/pqknn
+
+Portions of this repository are derived from the Product Quantization
+k-Nearest Neighbors implementation by Jeroen Van Der Donckt.
+
+Upstream repository:
+https://github.com/jvdd/pqknn
+
+Reference revision:
+https://github.com/jvdd/pqknn/tree/4722d9be07bb12a9ba32e2fc9205dc54b8daf219
+
+Upstream util.py:
+https://github.com/jvdd/pqknn/blob/4722d9be07bb12a9ba32e2fc9205dc54b8daf219/product_quantization/util.py
+
+This notice applies to portions derived from that upstream project,
+including the classical PQKNN implementation and the upstream-derived
+utility functions.
+
+Within product_quantization/util.py, the upstream-derived functions are:
+
+- log_nb_clusters_to_np_int_type
+- squared_euclidean_dist
+
+Any later modifications made by Christian Jesinghaus specifically within
+these two functions are also made available under the MIT License in order
+to preserve a single licensing regime for those functions.
+
+The original upstream software is licensed as follows:
 
 MIT License
 
