@@ -1,17 +1,17 @@
 cff-version: 1.2.0
-message: "If you use this repository or results produced with it, please cite the accompanying paper below."
-type: software
-title: "Additive Log-Fidelity Quantum k-Means for Hybrid Product Quantization"
+message: "If you use this software in research, please cite the thesis below."
+title: "Software accompanying: 'Product Quantization Techniques for Accelerating Vector Database Operations on a Hybrid Quantum Computing Machine'"
 authors:
   - family-names: Jesinghaus
     given-names: Christian
-  - family-names: Rellermeyer
-    given-names: Jan S.
-repository-code: "https://github.com/ChristianJesinghaus/Additive-Log-Fidelity-Quantum-k-Means-for-Hybrid-Product-Quantization"
-url: "https://github.com/ChristianJesinghaus/Additive-Log-Fidelity-Quantum-k-Means-for-Hybrid-Product-Quantization"
-keywords:
-  - quantum machine learning
-  - product quantization
-  - quantum k-means
-  - approximate nearest neighbors
-  - hybrid quantum-classical algorithms
+license: "LicenseRef-BA-Citation"
+preferred-citation:
+  type: thesis
+  title: "Product Quantization Techniques for Accelerating Vector Database Operations on a Hybrid Quantum Computing Machine"
+  authors:
+    - family-names: Jesinghaus
+      given-names: Christian
+  thesis-type: "Bachelor's thesis"
+  institution: "Leibniz University Hannover, Institute for Systems Engineering"
+  month: 9
+  year: 2025
