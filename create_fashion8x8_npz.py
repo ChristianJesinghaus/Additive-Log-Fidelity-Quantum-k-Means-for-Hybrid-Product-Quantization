@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+# SPDX-FileCopyrightText: 2025-2026 Christian Jesinghaus
+#
+# SPDX-License-Identifier: MIT
 """
 Create a 64-D Fashion-MNIST dataset by center-cropping 28x28 -> 24x24
 and average-pooling 3x3 blocks to 8x8.

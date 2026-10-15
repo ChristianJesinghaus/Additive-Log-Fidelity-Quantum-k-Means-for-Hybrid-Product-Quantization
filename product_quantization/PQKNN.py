@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
-__author__ = 'Jeroen Van Der Donckt'
- 
-# © 2021 Jeroen Van Der Donckt — License: MIT (see THIRD_PARTY_LICENSES/classical_PQKNN-MIT.txt)
-# Modifications © 2025 Christian Jesinghaus
 
+# SPDX-FileCopyrightText: 2021 Jeroen Van Der Donckt
+# SPDX-FileCopyrightText: 2025-2026 Christian Jesinghaus
+#
+# SPDX-License-Identifier: MIT
+#
+# Derived in part from the jvdd/pqknn project.
+# See THIRD_PARTY_LICENSE/classical_PQKNN_MIT.txt.
 
 import multiprocessing
 from typing import Callable, Any

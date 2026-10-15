@@ -1,5 +1,6 @@
-# © 2025 Christian Jesinghaus
-
+# SPDX-FileCopyrightText: 2025-2026 Christian Jesinghaus
+#
+# SPDX-License-Identifier: MIT
  
 
 """

@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
+# SPDX-FileCopyrightText: 2025-2026 Christian Jesinghaus
+#
+# SPDX-License-Identifier: MIT
 __author__ = "Christian Jesinghaus"
  
-# © 2025 Christian Jesinghaus
-
+# SPDX-FileCopyrightText: 2025-2026 Christian Jesinghaus
+#
+# SPDX-License-Identifier: MIT
 import os
 import glob
 import json

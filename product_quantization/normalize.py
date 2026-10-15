@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 __author__ = 'Christian Jesinghaus'
  
-# © 2025 Christian Jesinghaus
-
+# SPDX-FileCopyrightText: 2025-2026 Christian Jesinghaus
+#
+# SPDX-License-Identifier: MIT
 import numpy as np
 from typing import Union
 
