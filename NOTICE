@@ -1,0 +1,42 @@
+Licensing and Attribution Notice
+
+1. Software license
+
+Except where a file expressly states otherwise, the source code, scripts,
+configuration files, and software documentation in this repository for which
+Christian Jesinghaus holds the applicable rights are licensed under the MIT
+License contained in LICENSE.
+
+The current software distribution is intended to be usable under standard MIT
+terms. A research citation is appreciated but is not a condition of the MIT
+License.
+
+2. Upstream classical PQKNN code
+
+Portions of this repository are derived from the MIT-licensed jvdd/pqknn
+project by Jeroen Van Der Donckt.
+
+The original copyright and MIT notice are preserved in:
+
+THIRD_PARTY_LICENSE/classical_PQKNN_MIT.txt
+
+Detailed source provenance is recorded in PROVENANCE.md.
+
+3. Material outside the software license
+
+The MIT software license does not automatically apply to:
+
+- publication manuscripts, papers, theses, or PDF files;
+- datasets or data files;
+- generated experiment outputs, reports, figures, or model artefacts; or
+- any material carrying a separate notice.
+
+Such material is governed by its own notice, upstream terms, or applicable
+law. Inclusion in this repository does not by itself grant additional rights.
+
+4. AI-assisted development
+
+Some quantum-related code was initially generated with the assistance of
+ChatGPT and was subsequently reviewed, tested, integrated, and in places
+manually modified by Christian Jesinghaus. Further details are provided in
+PROVENANCE.md.

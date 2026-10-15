@@ -1,10 +1,17 @@
 cff-version: 1.2.0
-message: "If you use this software in research, please cite the thesis below."
-title: "Software accompanying: 'Product Quantization Techniques for Accelerating Vector Database Operations on a Hybrid Quantum Computing Machine'"
+message: "If you use this software in research, please cite the Bachelor's thesis listed under preferred-citation."
+
+type: software
+title: "Additive Log-Fidelity Quantum k-Means for Hybrid Product Quantization"
+
 authors:
   - family-names: Jesinghaus
     given-names: Christian
-license: "LicenseRef-BA-Citation"
+
+repository-code: "https://github.com/ChristianJesinghaus/Additive-Log-Fidelity-Quantum-k-Means-for-Hybrid-Product-Quantization"
+url: "https://github.com/ChristianJesinghaus/Additive-Log-Fidelity-Quantum-k-Means-for-Hybrid-Product-Quantization"
+license: MIT
+
 preferred-citation:
   type: thesis
   title: "Product Quantization Techniques for Accelerating Vector Database Operations on a Hybrid Quantum Computing Machine"
@@ -12,6 +19,9 @@ preferred-citation:
     - family-names: Jesinghaus
       given-names: Christian
   thesis-type: "Bachelor's thesis"
-  institution: "Leibniz University Hannover, Institute for Systems Engineering"
+  institution:
+    name: "Leibniz University Hannover"
+  department: "Institute for Systems Engineering"
   month: 9
   year: 2025
+  url: "https://github.com/ChristianJesinghaus/Hybrid-Quantum-Classical-Product-Quantization-for-Vector-Databases/blob/main/Bachelors_Thesis.pdf"
