@@ -32,8 +32,6 @@
 # Third-party license notice:
 #   THIRD_PARTY_LICENSE/classical_PQKNN_MIT.txt
 #
-# Because different portions of this file are subject to different terms,
-# no single file-wide SPDX-License-Identifier is declared here.
 
 
 import numpy as np

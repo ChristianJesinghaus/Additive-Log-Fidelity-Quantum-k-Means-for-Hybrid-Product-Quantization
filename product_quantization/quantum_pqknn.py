@@ -2,7 +2,6 @@
 __author__ = "Christian Jesinghaus"
  
 # © 2025 Christian Jesinghaus
-# SPDX-License-Identifier: LicenseRef-BA-Citation
 
 
 import os

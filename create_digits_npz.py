@@ -1,5 +1,4 @@
 # © 2025 Christian Jesinghaus
-# SPDX-License-Identifier: LicenseRef-BA-Citation 
 
 import numpy as np
 from sklearn.datasets import load_digits

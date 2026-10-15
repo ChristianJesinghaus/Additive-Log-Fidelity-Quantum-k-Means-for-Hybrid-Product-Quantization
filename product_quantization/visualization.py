@@ -1,6 +1,5 @@
 
 # © 2025 Christian Jesinghaus
-# SPDX-License-Identifier: LicenseRef-BA-Citation
 
  
 import matplotlib.pyplot as plt
