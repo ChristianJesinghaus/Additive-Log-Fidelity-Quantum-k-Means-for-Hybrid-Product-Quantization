@@ -9,21 +9,20 @@ https://github.com/jvdd/pqknn
 Reference revision:
 https://github.com/jvdd/pqknn/tree/4722d9be07bb12a9ba32e2fc9205dc54b8daf219
 
-Upstream util.py:
+Relevant upstream files:
+https://github.com/jvdd/pqknn/blob/4722d9be07bb12a9ba32e2fc9205dc54b8daf219/product_quantization/PQKNN.py
+https://github.com/jvdd/pqknn/blob/4722d9be07bb12a9ba32e2fc9205dc54b8daf219/product_quantization/__init__.py
 https://github.com/jvdd/pqknn/blob/4722d9be07bb12a9ba32e2fc9205dc54b8daf219/product_quantization/util.py
 
-This notice applies to portions derived from that upstream project,
-including the classical PQKNN implementation and the upstream-derived
-utility functions.
+The upstream-derived material includes, among other portions:
 
-Within product_quantization/util.py, the upstream-derived functions are:
+- product_quantization/PQKNN.py
+- the original basis of product_quantization/__init__.py
+- log_nb_clusters_to_np_int_type in product_quantization/util.py
+- squared_euclidean_dist in product_quantization/util.py
 
-- log_nb_clusters_to_np_int_type
-- squared_euclidean_dist
-
-Any later modifications made by Christian Jesinghaus specifically within
-these two functions are also made available under the MIT License in order
-to preserve a single licensing regime for those functions.
+Later modifications made by Christian Jesinghaus within these files and
+functions are also distributed under the MIT License.
 
 The original upstream software is licensed as follows:
 
@@ -43,8 +42,8 @@ copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM,
+OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
